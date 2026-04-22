@@ -1,0 +1,792 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);color:var(--color-text-primary);font-size:14px}
+.screen{display:none}
+.screen.active{display:flex}
+#authScreen{flex-direction:column;align-items:center;justify-content:center;min-height:500px;padding:40px 20px}
+.auth-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:32px;width:100%;max-width:380px}
+.auth-card h1{font-size:20px;font-weight:500;margin-bottom:6px}
+.auth-card p{font-size:13px;color:var(--color-text-secondary);margin-bottom:24px;line-height:1.5}
+.auth-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.auth-field label{font-size:12px;color:var(--color-text-secondary)}
+.auth-field input{font-size:13px;border-radius:var(--border-radius-md)}
+.auth-tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.auth-tab{padding:8px 16px;font-size:13px;cursor:pointer;color:var(--color-text-secondary);border-bottom:2px solid transparent;margin-bottom:-0.5px}
+.auth-tab.active{color:var(--color-text-primary);border-bottom:2px solid #378ADD;font-weight:500}
+.auth-divider{text-align:center;font-size:12px;color:var(--color-text-secondary);margin:14px 0}
+.err{font-size:12px;color:var(--color-text-danger);margin-top:8px;min-height:16px}
+#appScreen{flex-direction:column}
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary);flex-shrink:0}
+.top-bar-left{display:flex;align-items:center;gap:10px}
+.top-bar-title{font-size:14px;font-weight:500}
+.top-bar-user{font-size:12px;color:var(--color-text-secondary)}
+.top-bar-right{display:flex;gap:6px}
+.top-bar-right button{font-size:12px;padding:5px 12px}
+.app{display:grid;grid-template-columns:230px 1fr;flex:1;min-height:0;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden;margin:10px}
+.sidebar{background:var(--color-background-secondary);border-right:0.5px solid var(--color-border-tertiary);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-header{padding:12px 14px 10px;border-bottom:0.5px solid var(--color-border-tertiary);flex-shrink:0}
+.sidebar-header h2{font-size:15px;font-weight:500;margin-bottom:8px}
+.sidebar-btns{display:flex;gap:6px}
+.sidebar-btns button{flex:1;font-size:12px;padding:6px 4px}
+.patient-list{flex:1;overflow-y:auto}
+.loc-group-header{padding:8px 14px 4px;font-size:11px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.06em;background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.loc-badge{font-size:10px;background:#E6F1FB;color:#185FA5;padding:1px 7px;border-radius:20px}
+.patient-item{padding:9px 14px;cursor:pointer;border-bottom:0.5px solid var(--color-border-tertiary);transition:background 0.1s}
+.patient-item:hover{background:var(--color-background-primary)}
+.patient-item.active{background:var(--color-background-primary);border-left:2px solid #378ADD}
+.patient-item .pt-name{font-weight:500;font-size:13px}
+.patient-item .pt-meta{font-size:11px;color:var(--color-text-secondary)}
+.main{display:flex;flex-direction:column;background:var(--color-background-primary);overflow:hidden}
+.main-header{padding:12px 20px 10px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0}
+.main-header h1{font-size:16px;font-weight:500}
+.tab-bar{display:flex;border-bottom:0.5px solid var(--color-border-tertiary);padding:0 20px;flex-shrink:0}
+.tab{padding:10px 16px;font-size:13px;cursor:pointer;color:var(--color-text-secondary);border-bottom:2px solid transparent;margin-bottom:-0.5px}
+.tab.active{color:var(--color-text-primary);border-bottom:2px solid #378ADD;font-weight:500}
+.tab-content{padding:20px;flex:1;overflow-y:auto}
+.section-label{font-size:11px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;margin-top:18px}
+.section-label:first-child{margin-top:0}
+.field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:4px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;color:var(--color-text-secondary)}
+.field input,.field textarea,.field select{font-size:13px;width:100%;border-radius:var(--border-radius-md)}
+.field textarea{resize:vertical;min-height:70px}
+.tag-input-wrap{border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:6px 8px;display:flex;flex-wrap:wrap;gap:4px;min-height:36px;cursor:text;background:var(--color-background-primary)}
+.tag{background:#E6F1FB;color:#0C447C;font-size:12px;padding:2px 8px;border-radius:20px;display:flex;align-items:center;gap:4px}
+.tag button{background:none;border:none;cursor:pointer;color:#185FA5;font-size:14px;line-height:1;padding:0}
+.tag-input-wrap input{border:none;outline:none;background:transparent;font-size:13px;flex:1;min-width:80px;color:var(--color-text-primary);padding:0}
+.note-card{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px 16px;margin-bottom:12px}
+.note-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.note-date{font-weight:500;font-size:13px}
+.note-actions{display:flex;gap:6px;flex-wrap:wrap}
+.note-actions button{font-size:12px;padding:4px 10px}
+.vitals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:10px}
+.vital-cell{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px 10px}
+.vital-cell .v-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:2px}
+.vital-cell .v-val{font-size:15px;font-weight:500}
+.note-text{font-size:13px;color:var(--color-text-secondary);line-height:1.6;white-space:pre-wrap}
+.modal-bg{display:none;position:absolute;inset:0;background:rgba(0,0,0,0.35);z-index:100;align-items:center;justify-content:center;border-radius:var(--border-radius-lg)}
+.modal-bg.open{display:flex}
+.modal{background:var(--color-background-primary);border-radius:var(--border-radius-lg);padding:20px;width:500px;max-height:85vh;overflow-y:auto;border:0.5px solid var(--color-border-secondary)}
+.modal h2{font-size:16px;font-weight:500;margin-bottom:16px}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:0.5px solid var(--color-border-tertiary)}
+.empty-state{padding:40px 20px;text-align:center;color:var(--color-text-secondary);font-size:13px}
+.save-bar{padding:10px 20px;border-top:0.5px solid var(--color-border-tertiary);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}
+.btn-primary{background:#378ADD;color:#fff;border:none;border-radius:var(--border-radius-md);padding:7px 16px;font-size:13px;cursor:pointer;font-family:var(--font-sans)}
+.btn-primary:hover{background:#185FA5}
+.toast{position:absolute;bottom:16px;right:16px;padding:8px 16px;border-radius:var(--border-radius-md);font-size:13px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:200;color:#fff}
+.toast.show{opacity:1}
+.toast.success{background:#1D9E75}
+.toast.error{background:#E24B4A}
+.loc-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-bottom:6px;background:var(--color-background-secondary)}
+.loc-row span{font-size:13px;font-weight:500}
+.loc-row-actions{display:flex;gap:6px}
+.loc-row-actions button{font-size:12px;padding:3px 10px}
+.loc-chip{display:inline-block;background:#E6F1FB;color:#0C447C;font-size:12px;padding:2px 10px;border-radius:20px;font-weight:500}
+.unsaved-dot{width:7px;height:7px;background:#EF9F27;border-radius:50%;display:inline-block;margin-right:5px}
+</style>
+
+<h2 class="sr-only">Encrypted patient management app with file-based save and load</h2>
+
+<div id="authScreen" class="screen active">
+  <div class="auth-card">
+    <h1>Patient notes</h1>
+    <p>Your data is encrypted with AES-256-GCM and saved as a file on your computer.</p>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="atab-new" onclick="switchAuthTab('new')">New vault</div>
+      <div class="auth-tab" id="atab-load" onclick="switchAuthTab('load')">Load file</div>
+    </div>
+    <div id="authNew">
+      <div class="auth-field"><label>Username</label><input id="regUser" placeholder="Your name or initials"/></div>
+      <div class="auth-field"><label>Password</label><input id="regPass" type="password" placeholder="Choose a strong password"/></div>
+      <div class="auth-field"><label>Confirm password</label><input id="regPass2" type="password" placeholder="Repeat password"/></div>
+      <button class="btn-primary" style="width:100%;margin-top:4px" onclick="createVault()">Create vault</button>
+      <div class="err" id="regErr"></div>
+    </div>
+    <div id="authLoad" style="display:none">
+      <div class="auth-field">
+        <label>Load encrypted file</label>
+        <input type="file" id="loadFile" accept=".pnvault,.json" style="font-size:13px"/>
+      </div>
+      <div class="auth-field"><label>Password</label><input id="loadPass" type="password" placeholder="Your password"/></div>
+      <button class="btn-primary" style="width:100%;margin-top:4px" onclick="loadVault()">Unlock</button>
+      <div class="err" id="loadErr"></div>
+    </div>
+  </div>
+</div>
+
+<div id="appScreen" class="screen">
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <span class="top-bar-title">Patient notes</span>
+      <span class="top-bar-user" id="topUser"></span>
+      <span id="unsavedIndicator" style="display:none"><span class="unsaved-dot"></span><span style="font-size:12px;color:#BA7517">Unsaved changes</span></span>
+    </div>
+    <div class="top-bar-right">
+      <button onclick="triggerLoad()">Load file</button>
+      <button class="btn-primary" onclick="saveVault()">Save encrypted file</button>
+      <button onclick="lockApp()">Lock</button>
+    </div>
+  </div>
+  <div class="app">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>Patients</h2>
+        <div class="sidebar-btns">
+          <button onclick="openAddPatient()">+ Add patient</button>
+          <button onclick="openLocManager()">Locations</button>
+        </div>
+      </div>
+      <div class="patient-list" id="patientList"></div>
+    </div>
+    <div style="position:relative;flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <div class="main" id="mainArea" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+        <div class="empty-state">Select a patient or add a new one to get started.</div>
+      </div>
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="hiddenLoadFile" accept=".pnvault,.json" style="display:none"/>
+
+<!-- Modals -->
+<div class="modal-bg" id="locManagerModal">
+  <div class="modal">
+    <h2>Manage locations</h2>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <input id="newLocName" placeholder="New location name" style="flex:1;font-size:13px;border-radius:var(--border-radius-md)"/>
+      <button class="btn-primary" onclick="addLocation()">Add</button>
+    </div>
+    <div id="locList"></div>
+    <div class="modal-footer"><button onclick="closeModal('locManagerModal')">Done</button></div>
+  </div>
+</div>
+<div class="modal-bg" id="renameLocModal">
+  <div class="modal">
+    <h2>Rename location</h2>
+    <div class="field"><label>Location name</label><input id="renameLocInput"/></div>
+    <div class="modal-footer">
+      <button onclick="closeModal('renameLocModal')">Cancel</button>
+      <button class="btn-primary" onclick="confirmRenameLocation()">Save</button>
+    </div>
+  </div>
+</div>
+<div class="modal-bg" id="addPatientModal">
+  <div class="modal">
+    <h2 id="addPatientTitle">Add patient</h2>
+    <div class="field-grid">
+      <div class="field"><label>First name</label><input id="pFirst"/></div>
+      <div class="field"><label>Last name</label><input id="pLast"/></div>
+    </div>
+    <div class="field-grid" style="margin-top:10px">
+      <div class="field"><label>Date of birth</label><input id="pDOB" type="date"/></div>
+      <div class="field"><label>Sex</label><select id="pSex"><option value="">—</option><option>Male</option><option>Female</option><option>Other</option></select></div>
+      <div class="field"><label>MRN</label><input id="pMRN" placeholder="Optional"/></div>
+    </div>
+    <div class="field" style="margin-top:10px">
+      <label>Location</label>
+      <select id="pLocation"><option value="">— Unassigned —</option></select>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('addPatientModal')">Cancel</button>
+      <button class="btn-primary" onclick="savePatient()">Save patient</button>
+    </div>
+  </div>
+</div>
+<div class="modal-bg" id="addNoteModal">
+  <div class="modal" style="width:560px">
+    <h2 id="noteModalTitle">New progress note</h2>
+    <div class="field-grid">
+      <div class="field"><label>Date</label><input id="nDate" type="date"/></div>
+      <div class="field"><label>Provider</label><input id="nProvider" placeholder="Dr. Name"/></div>
+    </div>
+    <div class="section-label" style="margin-top:14px">Vitals</div>
+    <div class="field-grid">
+      <div class="field"><label>Heart rate (bpm)</label><input id="nHR" type="number" placeholder="72"/></div>
+      <div class="field"><label>BP systolic</label><input id="nBPS" type="number" placeholder="120"/></div>
+      <div class="field"><label>BP diastolic</label><input id="nBPD" type="number" placeholder="80"/></div>
+      <div class="field"><label>SpO2 (%)</label><input id="nSpO2" type="number" placeholder="98"/></div>
+      <div class="field"><label>Temp (°F)</label><input id="nTemp" type="number" step="0.1" placeholder="98.6"/></div>
+      <div class="field"><label>Weight (lbs)</label><input id="nWeight" type="number" step="0.1" placeholder="150"/></div>
+      <div class="field"><label>Resp. rate (/min)</label><input id="nRR" type="number" placeholder="16"/></div>
+    </div>
+    <div class="section-label" style="margin-top:14px">Note</div>
+    <div class="field"><textarea id="nNote" placeholder="Subjective findings, assessment, plan..." style="min-height:100px"></textarea></div>
+    <div class="modal-footer">
+      <button onclick="closeModal('addNoteModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveNote()">Save note</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let patients = [];
+let locations = [];
+let selectedId = null;
+let editingNoteIdx = null;
+let editingPatientId = null;
+let renamingLocId = null;
+let currentUsername = '';
+let currentPassword = '';
+let hasUnsaved = false;
+
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function deriveKey(password, salt) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), {name:'PBKDF2'}, false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    {name:'PBKDF2', salt, iterations:310000, hash:'SHA-256'},
+    keyMaterial,
+    {name:'AES-GCM', length:256},
+    false,
+    ['encrypt','decrypt']
+  );
+}
+
+async function encryptData(data, password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(password, salt);
+  const enc = new TextEncoder();
+  const ciphertext = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(JSON.stringify(data)));
+  const buf = new Uint8Array(salt.length + iv.length + ciphertext.byteLength);
+  buf.set(salt, 0);
+  buf.set(iv, 16);
+  buf.set(new Uint8Array(ciphertext), 28);
+  return btoa(String.fromCharCode(...buf));
+}
+
+async function decryptData(b64, password) {
+  const buf = Uint8Array.from(atob(b64), c=>c.charCodeAt(0));
+  const salt = buf.slice(0,16);
+  const iv = buf.slice(16,28);
+  const ciphertext = buf.slice(28);
+  const key = await deriveKey(password, salt);
+  const dec = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ciphertext);
+  return JSON.parse(new TextDecoder().decode(dec));
+}
+
+function switchAuthTab(t) {
+  document.getElementById('authNew').style.display = t==='new'?'block':'none';
+  document.getElementById('authLoad').style.display = t==='load'?'block':'none';
+  document.getElementById('atab-new').classList.toggle('active', t==='new');
+  document.getElementById('atab-load').classList.toggle('active', t==='load');
+}
+
+async function createVault() {
+  const user = document.getElementById('regUser').value.trim();
+  const pass = document.getElementById('regPass').value;
+  const pass2 = document.getElementById('regPass2').value;
+  const err = document.getElementById('regErr');
+  if (!user) { err.textContent='Please enter a username.'; return; }
+  if (pass.length < 6) { err.textContent='Password must be at least 6 characters.'; return; }
+  if (pass !== pass2) { err.textContent='Passwords do not match.'; return; }
+  err.textContent='';
+  currentUsername = user;
+  currentPassword = pass;
+  patients = []; locations = [];
+  markUnsaved();
+  launchApp();
+}
+
+async function loadVault() {
+  const file = document.getElementById('loadFile').files[0];
+  const pass = document.getElementById('loadPass').value;
+  const err = document.getElementById('loadErr');
+  if (!file) { err.textContent='Please select a file.'; return; }
+  if (!pass) { err.textContent='Please enter your password.'; return; }
+  err.textContent='Unlocking...';
+  try {
+    const text = await file.text();
+    const vault = JSON.parse(text);
+    const data = await decryptData(vault.data, pass);
+    currentUsername = vault.username || 'User';
+    currentPassword = pass;
+    patients = data.patients || [];
+    locations = data.locations || [];
+    hasUnsaved = false;
+    launchApp();
+  } catch(e) {
+    err.textContent='Incorrect password or corrupted file.';
+  }
+}
+
+function launchApp() {
+  document.getElementById('authScreen').classList.remove('active');
+  document.getElementById('appScreen').classList.add('active');
+  document.getElementById('topUser').textContent = currentUsername;
+  updateUnsavedIndicator();
+  renderSidebar();
+}
+
+function lockApp() {
+  if (hasUnsaved && !confirm('You have unsaved changes. Lock anyway?')) return;
+  patients=[]; locations=[]; selectedId=null;
+  currentUsername=''; currentPassword='';
+  document.getElementById('appScreen').classList.remove('active');
+  document.getElementById('authScreen').classList.add('active');
+  document.getElementById('regUser').value='';
+  document.getElementById('regPass').value='';
+  document.getElementById('regPass2').value='';
+  document.getElementById('loadPass').value='';
+  document.getElementById('regErr').textContent='';
+  document.getElementById('loadErr').textContent='';
+}
+
+async function saveVault() {
+  try {
+    const data = {patients, locations};
+    const encrypted = await encryptData(data, currentPassword);
+    const vault = JSON.stringify({username: currentUsername, data: encrypted});
+    const blob = new Blob([vault], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = new Date().toISOString().slice(0,10);
+    a.href=url; a.download=`patients_${date}.pnvault`;
+    a.click();
+    URL.revokeObjectURL(url);
+    hasUnsaved = false;
+    updateUnsavedIndicator();
+    toast('File saved and encrypted', 'success');
+  } catch(e) {
+    toast('Save failed: '+e.message, 'error');
+  }
+}
+
+function triggerLoad() {
+  if (hasUnsaved && !confirm('Loading a file will replace current data. Continue?')) return;
+  const inp = document.getElementById('hiddenLoadFile');
+  inp.onchange = async () => {
+    const file = inp.files[0];
+    if (!file) return;
+    const pass = prompt('Enter your password to decrypt this file:');
+    if (!pass) return;
+    try {
+      const text = await file.text();
+      const vault = JSON.parse(text);
+      const data = await decryptData(vault.data, pass);
+      currentUsername = vault.username || currentUsername;
+      currentPassword = pass;
+      patients = data.patients || [];
+      locations = data.locations || [];
+      hasUnsaved = false;
+      selectedId = null;
+      document.getElementById('topUser').textContent = currentUsername;
+      updateUnsavedIndicator();
+      renderSidebar();
+      document.getElementById('mainArea').innerHTML = '<div class="empty-state">File loaded. Select a patient.</div>';
+      toast('File loaded successfully', 'success');
+    } catch(e) {
+      toast('Incorrect password or corrupted file.', 'error');
+    }
+    inp.value='';
+  };
+  inp.click();
+}
+
+function markUnsaved() { hasUnsaved=true; updateUnsavedIndicator(); }
+function updateUnsavedIndicator() {
+  document.getElementById('unsavedIndicator').style.display = hasUnsaved ? 'flex' : 'none';
+}
+
+function getP(id) { return patients.find(p=>p.id===id); }
+function getLoc(id) { return locations.find(l=>l.id===id); }
+
+function renderSidebar() {
+  const el = document.getElementById('patientList');
+  let html='';
+  const grouped={};
+  const unassigned=[];
+  patients.forEach(p=>{
+    if(p.locationId&&getLoc(p.locationId)){
+      if(!grouped[p.locationId]) grouped[p.locationId]=[];
+      grouped[p.locationId].push(p);
+    } else unassigned.push(p);
+  });
+  locations.forEach(loc=>{
+    const pts=grouped[loc.id]||[];
+    html+=`<div class="loc-group-header">${escHtml(loc.name)}<span class="loc-badge">${pts.length}</span></div>`;
+    if(!pts.length) html+=`<div style="padding:8px 14px;font-size:12px;color:var(--color-text-secondary)">No patients</div>`;
+    pts.forEach(p=>html+=patientItemHtml(p));
+  });
+  if(unassigned.length||!locations.length){
+    if(locations.length) html+=`<div class="loc-group-header">Unassigned<span class="loc-badge">${unassigned.length}</span></div>`;
+    if(!patients.length) html+=`<div style="padding:14px;font-size:12px;color:var(--color-text-secondary)">No patients yet.</div>`;
+    else unassigned.forEach(p=>html+=patientItemHtml(p));
+  }
+  el.innerHTML=html;
+}
+
+function patientItemHtml(p){
+  return `<div class="patient-item${p.id===selectedId?' active':''}" onclick="selectPatient('${p.id}')">
+    <div class="pt-name">${escHtml(p.last)}, ${escHtml(p.first)}</div>
+    <div class="pt-meta">${p.dob||'DOB unknown'}${p.mrn?' · '+p.mrn:''}</div>
+  </div>`;
+}
+
+function selectPatient(id){ selectedId=id; renderSidebar(); renderMain(); }
+
+function renderMain(){
+  const p=getP(selectedId);
+  const main=document.getElementById('mainArea');
+  if(!p){main.innerHTML='<div class="empty-state">Select a patient.</div>';return;}
+  const loc=p.locationId?getLoc(p.locationId):null;
+  main.innerHTML=`
+    <div class="main-header">
+      <div>
+        <h1>${escHtml(p.last)}, ${escHtml(p.first)} <span style="font-weight:400;color:var(--color-text-secondary);font-size:13px">${p.mrn?'MRN: '+escHtml(p.mrn):''}</span></h1>
+        ${loc?`<div style="margin-top:4px"><span class="loc-chip">${escHtml(loc.name)}</span></div>`:''}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="openEditPatient('${p.id}')">Edit patient</button>
+        <button onclick="deletePatient('${p.id}')" style="color:var(--color-text-danger)">Delete</button>
+      </div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab active" id="tab-chart" onclick="switchTab('chart')">Chart</div>
+      <div class="tab" id="tab-notes" onclick="switchTab('notes')">Progress notes</div>
+    </div>
+    <div id="tabContent" class="tab-content" style="overflow-y:auto;flex:1"></div>
+    <div class="save-bar" id="saveBar" style="display:none">
+      <button onclick="showChartTab()">Cancel</button>
+      <button class="btn-primary" onclick="saveChart()">Save chart</button>
+    </div>`;
+  showChartTab();
+}
+
+function switchTab(t){
+  document.getElementById('tab-chart').classList.toggle('active',t==='chart');
+  document.getElementById('tab-notes').classList.toggle('active',t==='notes');
+  document.getElementById('saveBar').style.display=t==='chart'?'flex':'none';
+  if(t==='chart') showChartTab(); else showNotesTab();
+}
+
+function tagInputHtml(fieldKey,values){
+  const tags=(values||[]).map((v,i)=>`<span class="tag">${escHtml(v)}<button type="button" onclick="removeTag('${fieldKey}',${i})">×</button></span>`).join('');
+  return `<div class="tag-input-wrap" onclick="document.getElementById('tinput_${fieldKey}').focus()">${tags}<input id="tinput_${fieldKey}" placeholder="Type and press Enter" onkeydown="addTag(event,'${fieldKey}')"/></div>`;
+}
+
+function addTag(e,fieldKey){
+  if(e.key!=='Enter') return;
+  e.preventDefault();
+  const inp=document.getElementById('tinput_'+fieldKey);
+  const val=inp.value.trim();
+  if(!val) return;
+  const p=getP(selectedId);
+  if(!p.chart) p.chart={};
+  if(!p.chart[fieldKey]) p.chart[fieldKey]=[];
+  p.chart[fieldKey].push(val);
+  markUnsaved();
+  refreshTagArea(fieldKey);
+  inp.value='';
+}
+
+function removeTag(fieldKey,idx){
+  const p=getP(selectedId);
+  p.chart[fieldKey].splice(idx,1);
+  markUnsaved();
+  refreshTagArea(fieldKey);
+}
+
+function refreshTagArea(fieldKey){
+  const p=getP(selectedId);
+  const values=p.chart[fieldKey]||[];
+  const wrap=document.getElementById('tinput_'+fieldKey)?.parentElement;
+  if(!wrap) return;
+  const tags=values.map((v,i)=>`<span class="tag">${escHtml(v)}<button type="button" onclick="removeTag('${fieldKey}',${i})">×</button></span>`).join('');
+  wrap.innerHTML=tags+`<input id="tinput_${fieldKey}" placeholder="Type and press Enter" onkeydown="addTag(event,'${fieldKey}')"/>`;
+  wrap.onclick=()=>document.getElementById('tinput_'+fieldKey)?.focus();
+}
+
+function showChartTab(){
+  const p=getP(selectedId);
+  const c=p.chart||{};
+  const loc=p.locationId?getLoc(p.locationId):null;
+  document.getElementById('saveBar').style.display='flex';
+  document.getElementById('tabContent').innerHTML=`
+    <div class="section-label">Location</div>
+    <div style="margin-bottom:4px">
+      ${loc?`<span class="loc-chip">${escHtml(loc.name)}</span> <span style="font-size:12px;color:var(--color-text-secondary);margin-left:8px">Change via "Edit patient"</span>`
+           :`<span style="font-size:13px;color:var(--color-text-secondary)">Unassigned — change via "Edit patient"</span>`}
+    </div>
+    <div class="section-label">Demographics</div>
+    <div class="field-grid">
+      <div class="field"><label>DOB</label><input id="cDOB" value="${p.dob||''}" type="date"/></div>
+      <div class="field"><label>Sex</label><select id="cSex"><option value="">—</option><option${p.sex==='Male'?' selected':''}>Male</option><option${p.sex==='Female'?' selected':''}>Female</option><option${p.sex==='Other'?' selected':''}>Other</option></select></div>
+      <div class="field"><label>Phone</label><input id="cPhone" value="${escHtml(c.phone||'')}"/></div>
+      <div class="field"><label>Primary care provider</label><input id="cPCP" value="${escHtml(c.pcp||'')}"/></div>
+    </div>
+    <div class="section-label">Underlying conditions</div>${tagInputHtml('conditions',c.conditions)}
+    <div class="section-label">Medications</div>${tagInputHtml('medications',c.medications)}
+    <div class="section-label">Allergies</div>${tagInputHtml('allergies',c.allergies)}
+    <div class="section-label">Surgeries / procedures</div>${tagInputHtml('surgeries',c.surgeries)}
+    <div class="section-label">Notes (persistent)</div>
+    <div class="field"><textarea id="cNotes" style="min-height:80px">${escHtml(c.notes||'')}</textarea></div>`;
+}
+
+function saveChart(){
+  const p=getP(selectedId);
+  if(!p.chart) p.chart={};
+  p.dob=document.getElementById('cDOB').value;
+  p.sex=document.getElementById('cSex').value;
+  p.chart.phone=document.getElementById('cPhone').value;
+  p.chart.pcp=document.getElementById('cPCP').value;
+  p.chart.notes=document.getElementById('cNotes').value;
+  markUnsaved();
+  toast('Chart saved','success');
+  renderSidebar();
+}
+
+function showNotesTab(){
+  const p=getP(selectedId);
+  document.getElementById('saveBar').style.display='none';
+  const notes=(p.notes||[]).slice().reverse();
+  let html=`<button class="btn-primary" style="margin-bottom:16px" onclick="openAddNote()">+ New progress note</button>`;
+  if(!notes.length) html+='<div class="empty-state">No progress notes yet.</div>';
+  notes.forEach((n,ri)=>{
+    const i=(p.notes.length-1)-ri;
+    const vitals=[];
+    if(n.hr) vitals.push({l:'HR',v:n.hr+' bpm'});
+    if(n.bps&&n.bpd) vitals.push({l:'BP',v:n.bps+'/'+n.bpd+' mmHg'});
+    if(n.spo2) vitals.push({l:'SpO2',v:n.spo2+'%'});
+    if(n.temp) vitals.push({l:'Temp',v:n.temp+'°F'});
+    if(n.weight) vitals.push({l:'Weight',v:n.weight+' lbs'});
+    if(n.rr) vitals.push({l:'RR',v:n.rr+'/min'});
+    const vHtml=vitals.map(v=>`<div class="vital-cell"><div class="v-label">${v.l}</div><div class="v-val">${v.v}</div></div>`).join('');
+    html+=`<div class="note-card">
+      <div class="note-card-header">
+        <div><span class="note-date">${n.date||'Date unknown'}</span>${n.provider?`<span style="font-size:12px;color:var(--color-text-secondary);margin-left:10px">${escHtml(n.provider)}</span>`:''}</div>
+        <div class="note-actions">
+          <button onclick="copyNote(${i})">Copy text</button>
+          <button onclick="exportPDF(${i})">Export PDF</button>
+          <button onclick="openEditNote(${i})">Edit</button>
+          <button onclick="deleteNote(${i})" style="color:var(--color-text-danger)">Delete</button>
+        </div>
+      </div>
+      ${vHtml?`<div class="vitals-grid">${vHtml}</div>`:''}
+      ${n.note?`<div class="note-text">${escHtml(n.note)}</div>`:''}
+    </div>`;
+  });
+  document.getElementById('tabContent').innerHTML=html;
+}
+
+function openAddNote(){
+  editingNoteIdx=null;
+  document.getElementById('noteModalTitle').textContent='New progress note';
+  ['nProvider','nHR','nBPS','nBPD','nSpO2','nTemp','nWeight','nRR','nNote'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('nDate').value=new Date().toISOString().slice(0,10);
+  openModal('addNoteModal');
+}
+
+function openEditNote(i){
+  editingNoteIdx=i;
+  const n=getP(selectedId).notes[i];
+  document.getElementById('noteModalTitle').textContent='Edit progress note';
+  document.getElementById('nDate').value=n.date||'';
+  document.getElementById('nProvider').value=n.provider||'';
+  document.getElementById('nHR').value=n.hr||'';
+  document.getElementById('nBPS').value=n.bps||'';
+  document.getElementById('nBPD').value=n.bpd||'';
+  document.getElementById('nSpO2').value=n.spo2||'';
+  document.getElementById('nTemp').value=n.temp||'';
+  document.getElementById('nWeight').value=n.weight||'';
+  document.getElementById('nRR').value=n.rr||'';
+  document.getElementById('nNote').value=n.note||'';
+  openModal('addNoteModal');
+}
+
+function saveNote(){
+  const p=getP(selectedId);
+  if(!p.notes) p.notes=[];
+  const n={
+    date:document.getElementById('nDate').value,
+    provider:document.getElementById('nProvider').value,
+    hr:document.getElementById('nHR').value,
+    bps:document.getElementById('nBPS').value,
+    bpd:document.getElementById('nBPD').value,
+    spo2:document.getElementById('nSpO2').value,
+    temp:document.getElementById('nTemp').value,
+    weight:document.getElementById('nWeight').value,
+    rr:document.getElementById('nRR').value,
+    note:document.getElementById('nNote').value,
+  };
+  if(editingNoteIdx!==null) p.notes[editingNoteIdx]=n;
+  else p.notes.push(n);
+  markUnsaved();
+  closeModal('addNoteModal');
+  showNotesTab();
+  toast(editingNoteIdx!==null?'Note updated':'Note added','success');
+}
+
+function deleteNote(i){
+  if(!confirm('Delete this note?')) return;
+  getP(selectedId).notes.splice(i,1);
+  markUnsaved();
+  showNotesTab();
+}
+
+function noteAsText(p,n){
+  const c=p.chart||{};
+  const loc=p.locationId?getLoc(p.locationId):null;
+  let lines=[];
+  lines.push(`PROGRESS NOTE — ${p.last}, ${p.first}`);
+  lines.push(`Date: ${n.date||'—'}   Provider: ${n.provider||'—'}`);
+  if(p.dob) lines.push(`DOB: ${p.dob}   Sex: ${p.sex||'—'}`);
+  if(loc) lines.push(`Location: ${loc.name}`);
+  lines.push('');
+  lines.push('VITALS');
+  if(n.hr) lines.push(`  Heart rate: ${n.hr} bpm`);
+  if(n.bps&&n.bpd) lines.push(`  Blood pressure: ${n.bps}/${n.bpd} mmHg`);
+  if(n.spo2) lines.push(`  SpO2: ${n.spo2}%`);
+  if(n.temp) lines.push(`  Temperature: ${n.temp}°F`);
+  if(n.weight) lines.push(`  Weight: ${n.weight} lbs`);
+  if(n.rr) lines.push(`  Respiratory rate: ${n.rr}/min`);
+  lines.push('');
+  lines.push('CHART');
+  if(c.conditions?.length) lines.push(`  Conditions: ${c.conditions.join(', ')}`);
+  if(c.medications?.length) lines.push(`  Medications: ${c.medications.join(', ')}`);
+  if(c.allergies?.length) lines.push(`  Allergies: ${c.allergies.join(', ')}`);
+  if(c.surgeries?.length) lines.push(`  Surgeries/procedures: ${c.surgeries.join(', ')}`);
+  if(c.pcp) lines.push(`  PCP: ${c.pcp}`);
+  if(c.notes) lines.push(`  Notes: ${c.notes}`);
+  if(n.note){lines.push('');lines.push('NOTE');lines.push(n.note);}
+  return lines.join('\n');
+}
+
+function copyNote(i){
+  const p=getP(selectedId);
+  navigator.clipboard.writeText(noteAsText(p,p.notes[i])).then(()=>toast('Copied to clipboard','success'));
+}
+
+function exportPDF(i){
+  const p=getP(selectedId);
+  const n=p.notes[i];
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  doc.setFont('helvetica');doc.setFontSize(11);
+  doc.text(doc.splitTextToSize(noteAsText(p,n),170),20,20);
+  doc.save(`note_${p.last}_${p.first}_${n.date||'undated'}.pdf`);
+  toast('PDF downloaded','success');
+}
+
+function populateLocationSelect(selectId,currentVal){
+  document.getElementById(selectId).innerHTML='<option value="">— Unassigned —</option>'+
+    locations.map(l=>`<option value="${l.id}"${l.id===currentVal?' selected':''}>${escHtml(l.name)}</option>`).join('');
+}
+
+function openAddPatient(){
+  editingPatientId=null;
+  document.getElementById('addPatientTitle').textContent='Add patient';
+  ['pFirst','pLast','pMRN'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pDOB').value='';
+  document.getElementById('pSex').value='';
+  populateLocationSelect('pLocation','');
+  openModal('addPatientModal');
+}
+
+function openEditPatient(id){
+  editingPatientId=id;
+  const p=getP(id);
+  document.getElementById('addPatientTitle').textContent='Edit patient';
+  document.getElementById('pFirst').value=p.first;
+  document.getElementById('pLast').value=p.last;
+  document.getElementById('pDOB').value=p.dob||'';
+  document.getElementById('pSex').value=p.sex||'';
+  document.getElementById('pMRN').value=p.mrn||'';
+  populateLocationSelect('pLocation',p.locationId||'');
+  openModal('addPatientModal');
+}
+
+function savePatient(){
+  const first=document.getElementById('pFirst').value.trim();
+  const last=document.getElementById('pLast').value.trim();
+  if(!first||!last){alert('First and last name are required.');return;}
+  const locVal=document.getElementById('pLocation').value;
+  if(editingPatientId){
+    const p=getP(editingPatientId);
+    p.first=first;p.last=last;
+    p.dob=document.getElementById('pDOB').value;
+    p.sex=document.getElementById('pSex').value;
+    p.mrn=document.getElementById('pMRN').value;
+    p.locationId=locVal||null;
+  } else {
+    patients.push({id:'pt_'+Date.now(),first,last,dob:document.getElementById('pDOB').value,sex:document.getElementById('pSex').value,mrn:document.getElementById('pMRN').value,locationId:locVal||null,chart:{},notes:[]});
+  }
+  markUnsaved();
+  closeModal('addPatientModal');
+  renderSidebar();
+  if(editingPatientId) renderMain();
+  else selectPatient(patients[patients.length-1].id);
+}
+
+function deletePatient(id){
+  if(!confirm('Delete this patient and all their data?')) return;
+  patients=patients.filter(p=>p.id!==id);
+  markUnsaved();selectedId=null;
+  renderSidebar();
+  document.getElementById('mainArea').innerHTML='<div class="empty-state">Select a patient or add a new one.</div>';
+}
+
+function openLocManager(){ renderLocList(); openModal('locManagerModal'); }
+
+function renderLocList(){
+  const el=document.getElementById('locList');
+  if(!locations.length){el.innerHTML='<div style="font-size:13px;color:var(--color-text-secondary)">No locations yet.</div>';return;}
+  el.innerHTML=locations.map(l=>{
+    const count=patients.filter(p=>p.locationId===l.id).length;
+    return `<div class="loc-row">
+      <span>${escHtml(l.name)} <span style="font-size:12px;font-weight:400;color:var(--color-text-secondary)">(${count} patient${count!==1?'s':''})</span></span>
+      <div class="loc-row-actions">
+        <button onclick="openRenameLocation('${l.id}')">Rename</button>
+        <button onclick="deleteLocation('${l.id}')" style="color:var(--color-text-danger)">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addLocation(){
+  const name=document.getElementById('newLocName').value.trim();
+  if(!name) return;
+  locations.push({id:'loc_'+Date.now(),name});
+  document.getElementById('newLocName').value='';
+  markUnsaved();renderLocList();renderSidebar();
+}
+
+function openRenameLocation(id){
+  renamingLocId=id;
+  document.getElementById('renameLocInput').value=getLoc(id).name;
+  openModal('renameLocModal');
+}
+
+function confirmRenameLocation(){
+  const name=document.getElementById('renameLocInput').value.trim();
+  if(!name) return;
+  getLoc(renamingLocId).name=name;
+  markUnsaved();
+  closeModal('renameLocModal');
+  renderLocList();renderSidebar();
+  if(selectedId) renderMain();
+  toast('Location renamed','success');
+}
+
+function deleteLocation(id){
+  const count=patients.filter(p=>p.locationId===id).length;
+  if(!confirm(count?`Delete this location? ${count} patient(s) will become unassigned.`:'Delete this location?')) return;
+  locations=locations.filter(l=>l.id!==id);
+  patients.forEach(p=>{if(p.locationId===id) p.locationId=null;});
+  markUnsaved();renderLocList();renderSidebar();
+  if(selectedId) renderMain();
+}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function toast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+</script>
